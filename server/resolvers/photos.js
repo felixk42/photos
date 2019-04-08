@@ -90,9 +90,9 @@ export const getPhotos = async (__, args, context) => {
           `
           insert into flickr_searches (tag_id, searched_at)
           select tags.id, now() as searched_at from tags
-          where tags.name = :tag_name
+          WHERE tags.name = :tag_name
           ON CONFLICT ON CONSTRAINT flickr_searches_tag_id_unique
-            DO UPDATE SET (searched_at) = (now())
+            DO UPDATE SET (searched_at) = (excluded.searched_at)
           ;`,
           {tag_name: tagStringNormalised},
         )
