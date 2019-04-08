@@ -2,8 +2,8 @@ Preamble
 --------------
 
 Main Concerns:
-* API rate limiting (Flickr) - for simplicity we use a simple, not-distributed generic rate [limiter](https://github.com/jhurliman/node-rate-limiter) to rate-limit how often we request data from Flickr
-  * This is also very likely the first constraint we will run up against.
+* API rate limiting (Flickr) - for simplicity we can use a simple, non-distributed generic rate limiter, such as [node-rate-limiter](https://github.com/jhurliman/node-rate-limiter) to rate-limit how often we request data from Flickr
+  * This is also very likely the first major constraint we will run up against in scaling up.
   * Likewise, if we keep making requests to it our user will experience a slow system, because both individual requests take time, and all users will have to wait if we exhaust our limit.
   * So where possible, we minimise requests to it by caching.
   * For now, we don't serve the actual images ourselves, for our solution to scale we will need to either get acommercial account with Flickr that provides enough bandwidth, or cache and serve the images ourselves.
@@ -94,4 +94,18 @@ Assumptions and Caveats
 * We don't have a security model whatsoever, given we are not tracking user behaviour in this iteration and all the underlying data is public.
 * The ecosystem-config.js file is committed, in the real would we won't do that.
 * In a real-world setup, even though all the data are public, we will still need to implement rate-limiting for both our users and how our own app talks to the 3rd party API.
+
+
+Installation Instructions
+----------------
+See INSTALL.md, note that this is grossly simplified due to time constraint.
+
+
+File Structure
+--------------
+- [client/](client/): client app
+- [client/package.json](client/package.json): client package.json
+- [server/](server/): server
+- [package.json](package.json): server package.json
+- [server/typedefs.graphql](server/typedefs.graphql): GraphQL Schema
 
