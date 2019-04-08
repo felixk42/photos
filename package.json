@@ -110,7 +110,7 @@
     "migrateStagingRemotely": "eval $(./scripts/ecosystem-env.js localStagingDB) && yarn migrateToLatestNoEnv",
     "rollbackStagingRemotely": "eval $(./scripts/ecosystem-env.js localStagingDB) && yarn rollbackNoEnv",
     "migrateStagingToLatest": "eval $(./scripts/ecosystem-env.js staging) && babel-node views/dropAllViews.js && knex migrate:latest && babel-node views/refreshAllViews.js",
-    "migrateProdToLatest": "eval $(./scripts/ecosystem-env.js app) && knex migrate:latest",
+    "migrateProdToLatest": "eval $(./scripts/ecosystem-env.js prod) && knex migrate:latest",
     "genJSDocs": "yarn jsdoc -- -c jsdocConf.json -r -d docs/generatedJSDocs"
   },
   "jest": {
@@ -152,6 +152,8 @@
   },
   "eslintConfig": {},
   "devDependencies": {
+    "@babel/core": "^7.4.3",
+    "@babel/node": "^7.2.2",
     "chai": "^4.1.2",
     "eslint-plugin-mocha": "^5.1.0",
     "karma": "^2.0.0",
