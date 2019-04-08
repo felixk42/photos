@@ -90,6 +90,7 @@ Assumptions and Caveats
 --------------
 
 * Please note that the repo has been based on another actively developed app, which is in turn based on Create React App, so there are unneeded dependencies and dead code. In a real world all this would be meticulously cleaned up for security and performance.
+* Likewise, quite a few of the dependencies are outdated.
 * We don't have a security model whatsoever, given we are not tracking user behaviour in this iteration and all the underlying data is public.
 * The ecosystem-config.js file is committed, in the real would we won't do that.
 * In a real-world setup, even though all the data are public, we will still need to implement rate-limiting for both our users and how our own app talks to the 3rd party API.

@@ -9,8 +9,8 @@ import InfiniteScroll from 'react-infinite-scroller'
 import {BrowserRouter, Route} from 'react-router-dom'
 import util from 'util'
 
-
 import {
+  Alert,
   Row,
   Col,
   Container,
@@ -20,7 +20,7 @@ import {
   CardTitle,
 } from 'reactstrap'
 import './style.scss'
-export const setTimeoutPromise = util.promisify(setTimeout);
+export const setTimeoutPromise = util.promisify(setTimeout)
 
 const PhotoCard = ({photo}) => {
   // console.log('photo:')
@@ -120,7 +120,7 @@ class Home extends React.Component {
   @autobind
   handleSearchByTag(tagValue, client) {
     //reset the feed (even if it's just an empty enter)
-    //InfiniteScroll will make the call 
+    //InfiniteScroll will make the call
     this.setState({
       tagValue,
       photos: [],
@@ -153,18 +153,22 @@ class Home extends React.Component {
                         loadMore={() => this.loadPhotos(client)}
                         hasMore={this.state.hasMorePhotos}
                         loader={<Loading loading={true} key={0} />}
-                    // loader={<div className="loader" key={0}>Loading ...</div>}
-                    useWindow={true}
+                        // loader={<div className="loader" key={0}>Loading ...</div>}
+                        useWindow={true}
                         id={this.state.tagValue}
                         initialLoad={true}>
                         <Row>
                           {this.state.photos.map(photo => (
-                            <Col className="col-12 col-md-6 col-xl-4" key={photo.id}>
+                            <Col
+                              className="col-12 col-md-6 col-xl-4"
+                              key={photo.id}>
                               <PhotoCard photo={photo} key={photo.id} />
                             </Col>
-                          ))
-                          }
+                          ))}
                         </Row>
+                        <div className='Aligner-vertical-flex no-photos-alert'>
+                          {this.state.photos.length === 0 && (<Alert color='warning'> No Photos Matching This Tag </Alert>)}
+                        </div>
                       </InfiniteScroll>
                     </Container>
                   )}

@@ -6,6 +6,8 @@ RUN apk update && \
     apk update && \
     npm install npm@latest -g
 
+RUN apk add yarn
+
 # install libsass
 RUN git clone https://github.com/sass/sassc && cd sassc && \
     git clone https://github.com/sass/libsass && \
@@ -33,4 +35,4 @@ ADD . /photos
 WORKDIR /photos
 RUN npm i
 EXPOSE 3000
-CMD ["npm", "npm start"]
+CMD ["yarn", "ls", "yarn start"]

@@ -67,3 +67,37 @@ export const camelcaseKeysArray = array => {
   return array.map(camelcaseKeys)
 }
 
+export const setTimeoutPromise = util.promisify(setTimeout);
+
+/**
+ * Used for concurrency control.
+ * Node uses an event loop, so we don't need atomic compare-and-swap.
+ * Main concurrency this is used to guard is this sequence of events:
+ *
+ * 1. Client requests getPhotos(tagString: "desk") - request A
+ * 2. As part of request A, we go to Flickr to get the data
+ * 3. Client (same or different) requests getPhotos(tagString: "desk") again
+ * 4. We shouldn't make another one to Fllickr.
+ *
+ * @arg predFunc {function} - a function that takes no argument
+ *
+ * @returns {Promise} - resolves when predFunc evals to true
+ */
+export const asyncWaitUntilTrue = predFunc => {
+  const promise = new Promise((resolve, reject) => {
+    const checkAndResolveIfPredTrue = () => {
+      if (predFunc()) {
+        console.log('resolving')
+        resolve()
+      }
+      else{
+        console.log('waiting...')
+        setImmediate(checkAndResolveIfPredTrue)
+      }
+    }
+    setImmediate(checkAndResolveIfPredTrue)
+  })
+  return promise
+}
+
+export const asyncWaitUntilFalse = predFunc => asyncWaitUntilTrue(() => !predFunc())

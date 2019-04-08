@@ -9,7 +9,6 @@ import autobind from 'autobind-decorator'
 import context from './context'
 import {BrowserRouter as Router, Route, Redirect} from 'react-router-dom'
 import ErrorBoundary from './modules/errorBoundary'
-import VersionFooter from './modules/versionFooter'
 
 const {apolloClient} = context()
 
@@ -37,7 +36,6 @@ class RootComponent extends React.Component{
               />
               <Route path="/home" component={Home}/>
             </ErrorBoundary>
-            <VersionFooter />
           </div>
         </Router>
       </ApolloProvider>

@@ -1,5 +1,5 @@
 import {knex} from '../db'
-import {camelcaseKeysArray, inspectObj} from '../utils'
+import {camelcaseKeysArray, inspectObj, setTimeoutPromise,asyncWaitUntilFalse} from '../utils'
 import Constants from '../constants'
 import {isUndefined, isEmpty} from 'lodash'
 import camelcaseKeys from 'camelcase-keys'
@@ -8,6 +8,8 @@ import {flickrAPI} from '../flickr-api.js'
 import {upsertTags} from '../db/queries'
 
 const {flickrGroupId} = Constants
+
+const inFlightFlickrQueries = new Map()
 
 /**
  * The main API entry point
@@ -23,7 +25,13 @@ export const getPhotos = async (__, args, context) => {
   const pageSize = Math.max(20, args.pageSize ? args.pageSize : 0)
   const {tagString} = args
   const hasTagString = !isEmpty(tagString) && !isUndefined(tagString)
-  const tagStringNormalised = hasTagString ? tagString.toLowerCase() : tagString
+  const tagStringNormalised = hasTagString ? tagString.toLowerCase() : null
+
+  /*
+   * this uniquely identifies a request (to us),
+   * so we know when the exact same request is already in flight to Flickr
+  */
+  const searchQueryKey = tagStringNormalised
 
   console.log('getPhotos: ')
   inspectObj({pageSize, tagStringNormalised, pageOffset})
@@ -32,45 +40,60 @@ export const getPhotos = async (__, args, context) => {
    * If we have to fetch it from Flickr's API, we do that first, which will then polulate the SQL DB
    * Either way, we return the result from the SQL DB
    */
-  const fetchFromFlickrInterval = '30 minutes'
-
-  const qbNeedToFetch = knex('flickr_searches').first('*')
-  if (hasTagString) {
-    qbNeedToFetch
-      .innerJoin('tags', 'tags.id', 'flickr_searches.tag_id')
-      .where('tags.name', tagStringNormalised)
-  } else {
-    qbNeedToFetch.whereNull('flickr_searches.tag_id')
+  if (inFlightFlickrQueries.has(searchQueryKey)) {
+    // there's a flickr query in flight for this query, wait for it to finish and then return
+    console.log('query already in flight: ', searchQueryKey)
+    await asyncWaitUntilFalse(() => inFlightFlickrQueries.has(searchQueryKey))
   }
-  qbNeedToFetch.andWhereRaw(
-    `flickr_searches.searched_at >= (now() - INTERVAL '${fetchFromFlickrInterval}')`,
-  )
+  else{
+    const fetchFromFlickrInterval = '30 minutes'
 
-  const hasFetchedRecently = await qbNeedToFetch
-  inspectObj({hasFetchedRecently})
-  if (!hasFetchedRecently) {
+    const qbNeedToFetch = knex('flickr_searches').first('*')
     if (hasTagString) {
-      //The search may have no result, so we need to upsert the tagId
-      await upsertTags([tagStringNormalised])
-    }
-
-    await flickrAPI.init()
-    await flickrAPI.fetchPhotosFromFlickrForGroup(tagStringNormalised)
-
-    //record the search
-    if (hasTagString) {
-      await knex.raw(
-        `
-        insert into flickr_searches (tag_id, searched_at)
-        select tags.id, now() as searched_at from tags
-        where tags.name = :tag_name
-        ON CONFLICT ON CONSTRAINT flickr_searches_tag_id_searched_at_key
-          DO UPDATE SET (searched_at) = (now())
-        ;`,
-        {tag_name: tagStringNormalised},
-      )
+      qbNeedToFetch
+        .innerJoin('tags', 'tags.id', 'flickr_searches.tag_id')
+        .where('tags.name', tagStringNormalised)
     } else {
-      await knex('flickr_searches').insert({tag_id: null, searched_at: 'now()'})
+      qbNeedToFetch.whereNull('flickr_searches.tag_id')
+    }
+    qbNeedToFetch.andWhereRaw(
+      `flickr_searches.searched_at >= (now() - INTERVAL '${fetchFromFlickrInterval}')`,
+    )
+
+    const hasFetchedRecently = await qbNeedToFetch
+    inspectObj({hasFetchedRecently})
+    if (!hasFetchedRecently) {
+      //set the query as inFlight
+      inFlightFlickrQueries.set(searchQueryKey, true)
+      if (hasTagString) {
+        //The search may have no result, so we need to upsert the tagId
+        await upsertTags([tagStringNormalised])
+      }
+
+      //wait
+      // await setTimeoutPromise(5000)
+
+      await flickrAPI.init()
+      await flickrAPI.fetchPhotosFromFlickrForGroup()
+
+      //record the search
+      if (hasTagString) {
+        await knex.raw(
+          `
+          insert into flickr_searches (tag_id, searched_at)
+          select tags.id, now() as searched_at from tags
+          where tags.name = :tag_name
+          ON CONFLICT ON CONSTRAINT flickr_searches_tag_id_unique
+            DO UPDATE SET (searched_at) = (now())
+          ;`,
+          {tag_name: tagStringNormalised},
+        )
+      } else {
+        await knex('flickr_searches').insert({tag_id: null, searched_at: 'now()'})
+      }
+
+      //finally, mark it as not in flight anymore
+      inFlightFlickrQueries.delete(searchQueryKey)
     }
   }
 
@@ -84,7 +107,7 @@ export const getPhotos = async (__, args, context) => {
       .andWhere('tags.name', tagStringNormalised)
   }
 
-  qb.limit(pageSize).offset(pageOffset)
+  qb.orderBy('fetched_at', 'desc').limit(pageSize).offset(pageOffset)
 
   const photos = camelcaseKeysArray(await qb)
   return {
@@ -124,10 +147,11 @@ export const resolvers = {
     },
     tags: async (photo, __, context) => {
       return camelcaseKeysArray(
-        await knex('tags').select('tags.*')
-        .innerJoin('photos_tags', 'tags.id', 'photos_tags.tag_id')
-        .where('photos_tags.photo_id', photo.id)
-        .orderBy('tags.name', 'asc')
+        await knex('tags')
+          .select('tags.*')
+          .innerJoin('photos_tags', 'tags.id', 'photos_tags.tag_id')
+          .where('photos_tags.photo_id', photo.id)
+          .orderBy('tags.name', 'asc'),
       )
     },
   },

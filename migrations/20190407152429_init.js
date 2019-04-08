@@ -13,9 +13,7 @@ exports.up = function(knex, Promise) {
 
     CREATE TABLE flickr_groups (
       id character varying(255) PRIMARY KEY,
-      name character varying(255),
-      last_fetched_100_at timestamp with time zone,
-      last_fetched_1000_at timestamp with time zone
+      name character varying(255)
     );
 
     CREATE TABLE photos (
@@ -25,7 +23,8 @@ exports.up = function(knex, Promise) {
       secret character varying(255) not null,
       server integer not null,
       farm integer not null,
-      flickr_group_id varchar(255) NOT NULL REFERENCES flickr_groups(id)
+      flickr_group_id varchar(255) NOT NULL REFERENCES flickr_groups(id),
+      fetched_at timestamp with time zone not null
     );
 
     CREATE TABLE photos_tags (
@@ -37,7 +36,7 @@ exports.up = function(knex, Promise) {
     CREATE TABLE flickr_searches (
       tag_id bigint REFERENCES tags(id),
       searched_at timestamp with time zone NOT NULL,
-      CONSTRAINT flickr_searches_tag_id_searched_at_key  UNIQUE (tag_id, searched_at)
+      CONSTRAINT flickr_searches_tag_id_unique UNIQUE (tag_id)
     );
 
   `)

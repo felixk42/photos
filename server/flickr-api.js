@@ -107,7 +107,7 @@ class FlickrAPI {
 
     console.log('upserted all flickr_users')
 
-    inspectObj({photo0: photos[0]})
+    // inspectObj({photo0: photos[0]})
     await knex.raw(
       knex('photos')
       .insert(
@@ -117,6 +117,7 @@ class FlickrAPI {
             {
               flickr_group_id: this.flickrGroupId,
               owner_flickr_user_id: photo.owner,
+              fetched_at: 'now()'
             },
           ),
         ),
