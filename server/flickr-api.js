@@ -2,7 +2,7 @@ import {inspectObj, promiseReduce} from './utils'
 import {RateLimiter} from 'limiter'
 import Flickr from 'flickrapi'
 import {promisify} from 'util'
-import {uniq, flatMap, pick, isUndefined, isNull} from 'lodash'
+import {uniq, flatMap, pick, isUndefined, isNull, isEmpty} from 'lodash'
 import {knex} from './db'
 import Constants from './constants'
 import {upsertFlickrGroup} from './db/queries'
@@ -82,65 +82,75 @@ class FlickrAPI {
      * the api gives us space separated tags
      * */
     const allTags = uniq(flatMap(photos, this.tagsOfPhotoFromFlickr))
-    console.log(`inserting ${allTags.length} tags`)
-    // inspectObj({allTags})
-    //insert all the tags, if they are not already there
-    const upsertedTags = await knex.raw(
-      knex('tags')
-      .insert(allTags.map(tag => ({name: tag})))
-      .toString() + ` ON CONFLICT ON CONSTRAINT unique_name DO NOTHING;`,
-    )
-    console.log('inserted all tags')
+    if(!isEmpty(allTags)){
+      console.log(`inserting ${allTags.length} tags`)
+      // inspectObj({allTags})
+      //insert all the tags, if they are not already there
+      const upsertedTags = await knex.raw(
+        knex('tags')
+        .insert(allTags.map(tag => ({name: tag})))
+        .toString() + ` ON CONFLICT ON CONSTRAINT unique_name DO NOTHING;`,
+      )
+      console.log('inserted all tags')
+    }
     //same with flickr users
     const flickrUsers = uniq(
       photos.map(photo => ({id: photo.owner, name: photo.ownername})),
     )
     // inspectObj({flickrUsers})
-    await knex.raw(
-      knex('flickr_users')
-      .insert(flickrUsers)
-      .toString() + ` ON CONFLICT DO NOTHING;`,
-    )
+    if(!isEmpty(flickrUsers)){
+      await knex.raw(
+        knex('flickr_users')
+        .insert(flickrUsers)
+        .toString() + ` ON CONFLICT DO NOTHING;`,
+      )
+    }
 
     console.log('upserted all flickr_users')
 
-    // inspectObj({photo0: photos[0]})
-    await knex.raw(
-      knex('photos')
-      .insert(
-        photos.map(photo =>
-          Object.assign(
-            pick(photo, ['id', 'secret', 'title', 'farm', 'server']),
-            {
-              flickr_group_id: this.flickrGroupId,
-              owner_flickr_user_id: photo.owner,
-              fetched_at: 'now()'
-            },
+    if(!isEmpty(photos)){
+
+      // inspectObj({photo0: photos[0]})
+      await knex.raw(
+        knex('photos')
+        .insert(
+          photos.map(photo =>
+            Object.assign(
+              pick(photo, ['id', 'secret', 'title', 'farm', 'server']),
+              {
+                flickr_group_id: this.flickrGroupId,
+                owner_flickr_user_id: photo.owner,
+                fetched_at: 'now()'
+              },
+            ),
           ),
-        ),
+        )
+        .toString() + ` ON CONFLICT DO NOTHING;`,
       )
-      .toString() + ` ON CONFLICT DO NOTHING;`,
-    )
-    // console.log('upserted all photos')
+    }
+    console.log('upserted all photos')
 
     //finally the photos_tags table
     const tagsFromDB = await knex('tags')
       .select('id', 'name')
       .whereIn('name', allTags)
     const tagNameToIdName = new Map(tagsFromDB.map(tag => [tag.name, tag.id]))
-    // inspectObj({tagsFromDB})
-    await knex.raw(
-      knex('photos_tags')
-      .insert(
-        flatMap(photos, photo =>
+
+    const photosTagsToUpsert = flatMap(photos, photo =>
           this.tagsOfPhotoFromFlickr(photo).map(tagName => ({
             tag_id: tagNameToIdName.get(tagName),
             photo_id: photo.id,
-          })),
-        ),
-      )
-      .toString() + ` ON CONFLICT DO NOTHING;`,
+          }))
     )
+    // inspectObj({photosTagsToUpsert})
+    if(!isEmpty(photosTagsToUpsert)){
+      await knex.raw(
+        knex('photos_tags')
+        .insert(photosTagsToUpsert)
+        .toString() + ` ON CONFLICT DO NOTHING;`,
+      )
+    }
+    console.log('upserted all photosTags')
 
   }
 }

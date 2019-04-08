@@ -167,8 +167,8 @@ class Home extends React.Component {
                           {this.state.photos.map(photo => (
                             <Col
                               className="col-12 col-md-6 col-xl-4"
-                              key={photo.id}>
-                              <PhotoCard photo={photo} key={photo.id} />
+                              key={'col-' + photo.id}>
+                              <PhotoCard photo={photo} key={'photo-card-' + photo.id} />
                             </Col>
                           ))}
                         </Row>
