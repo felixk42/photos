@@ -16,10 +16,10 @@ var localPostgres = {
   POSTGRES_DB: 'photos_app',
 }
 
-var stagingPostgres= {
+var prodPostgres= {
   POSTGRES_HOST: 'localhost',
   POSTGRES_USER: 'photos_app',
-  POSTGRES_PASSWORD: 'apple',
+  POSTGRES_PASSWORD: 'password',
   POSTGRES_DB: 'photos_app',
   POSTGRES_PORT: 7432,
 }
@@ -71,11 +71,11 @@ module.exports = {
         PORT: FRONTEND_PORT_DEV,
         FILE_UPLOAD_DIR: './uploaded_files/',
 
-        POSTGRES_HOST: localPostgres.POSTGRES_HOST,
-        POSTGRES_USER: localPostgres.POSTGRES_USER,
-        POSTGRES_PASSWORD: localPostgres.POSTGRES_PASSWORD,
-        POSTGRES_DB: localPostgres.POSTGRES_DB,
-        POSTGRES_PORT: localPostgres.POSTGRES_PORT,
+        POSTGRES_HOST: prodPostgres.POSTGRES_HOST,
+        POSTGRES_USER: prodPostgres.POSTGRES_USER,
+        POSTGRES_PASSWORD: prodPostgres.POSTGRES_PASSWORD,
+        POSTGRES_DB: prodPostgres.POSTGRES_DB,
+        POSTGRES_PORT: prodPostgres.POSTGRES_PORT,
         POSTGRES_USE_SSL: false,
 
         DANGEROUSLY_DISABLE_HOST_CHECK: true,

@@ -1,0 +1,78 @@
+#!/bin/bash
+# Deploy upstream dev branch to staging server.
+# TODO: update atomically
+
+set -e
+
+: ${APP_USER:=felix}
+: ${APP_HOST:=photos.dotd.co}
+: ${APP_REPO:=origin}
+: ${APP_GITREF:=master}
+: ${APP_PATH:=photos}
+: ${APP_NAME:=prod}
+
+function run {
+    echo "Run: $@"
+    "$@"
+}
+
+echo "Deploying \"$APP_NAME\" to $APP_USER@$APP_HOST:$APP_PATH..."
+echo
+
+echo Run: eval "\$(scripts/ecosystem-env.js $APP_NAME)"
+eval "$(scripts/ecosystem-env.js "$APP_NAME")"
+
+run git fetch "$APP_REPO"
+
+REPO_URL=$(git remote get-url "$APP_REPO")
+LOCAL_REF=$(git symbolic-ref --short HEAD || git log -n1 --format=format:%h HEAD)
+LOCAL_HASH=$(git log -n1 --format=format:%h "$LOCAL_REF")
+GITREF_HASH=$(git log -n1 --format=format:%h "$APP_REPO/$APP_GITREF")
+echo "Deploying version $APP_REPO/$APP_GITREF = $GITREF_HASH"
+if [ "$LOCAL_HASH" != "GITREF_HASH" ]; then
+    echo "Temporarily checking out $GITREF_HASH (was at: $LOCAL_REF)"
+    run git checkout "$GITREF_HASH"
+    trap 'git checkout "$LOCAL_REF"' EXIT
+fi
+
+echo
+echo "Building client app..."
+echo
+
+(
+    echo Run: cd client &&
+        cd client &&
+        run yarn &&
+        run node scripts/build.js
+)
+
+echo
+echo "Deploying server app..."
+echo
+
+run ssh "$APP_USER@$APP_HOST" bash <<EOF
+set -e
+function run {
+    echo "Remote run: \$@"
+    "\$@"
+}
+echo Remote run: cd "$APP_PATH"
+cd "$APP_PATH"
+echo Remote run: eval "\\\$(node scripts/ecosystem-env.js "$APP_NAME")"
+eval "\$(scripts/ecosystem-env.js "$APP_NAME")"
+REMOTE_REPO_URL=\$(git remote get-url "$APP_REPO")
+if [ "$REPO_URL" != "\$REMOTE_REPO_URL" ]; then
+    echo "Warning: URL of $APP_REPO is $REPO_URL locally but \$REMOTE_REPO_URL on server"
+fi
+run git fetch "$APP_REPO"
+run git reset --hard "$GITREF_HASH"
+run yarn
+run knex migrate:latest
+run pm2 startOrRestart ecosystem.config.js --only "$APP_NAME"
+EOF
+
+echo
+echo "Deploying client app..."
+echo
+
+run rsync -rv --delete -e ssh client/build "$APP_USER@$APP_HOST:$APP_PATH/client/"
