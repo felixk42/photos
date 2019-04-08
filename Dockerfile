@@ -33,6 +33,10 @@ ENV SKIP_NODE_SASS_TESTS true
 RUN mkdir /photos
 ADD . /photos
 WORKDIR /photos
-RUN npm i
+RUN yarn
+WORKDIR /photos/client
+RUN yarn
+WORKDIR /photos
+
 EXPOSE 3000
-CMD ["yarn", "ls", "yarn start"]
+CMD ["yarn", "start"]

@@ -60,5 +60,33 @@ module.exports = {
         REACT_APP_FRONTEND_URI: 'localhost:'+FRONTEND_PORT_DEV,
       },
     },
+    {
+      name: 'prod',
+      script,
+      interpreter: 'babel-node',
+      log_date_format,
+      env: {
+        NODE_ENV: 'production',
+        BACKEND_PORT: BACKEND_PORT_DEV,
+        PORT: FRONTEND_PORT_DEV,
+        FILE_UPLOAD_DIR: './uploaded_files/',
+
+        POSTGRES_HOST: localPostgres.POSTGRES_HOST,
+        POSTGRES_USER: localPostgres.POSTGRES_USER,
+        POSTGRES_PASSWORD: localPostgres.POSTGRES_PASSWORD,
+        POSTGRES_DB: localPostgres.POSTGRES_DB,
+        POSTGRES_PORT: localPostgres.POSTGRES_PORT,
+        POSTGRES_USE_SSL: false,
+
+        DANGEROUSLY_DISABLE_HOST_CHECK: true,
+
+        SESSION_SECRET: 'apple',
+        JWT_SECRET: 'orange',
+
+        // NOTE: only variables with the prefix REACT_APP_ will be visible to the frontend (for security purposes)
+        REACT_APP_BACKEND_URI: 'localhost:'+BACKEND_PORT_DEV,
+        REACT_APP_FRONTEND_URI: 'localhost:'+FRONTEND_PORT_DEV,
+      },
+    }
   ]
 }
