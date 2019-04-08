@@ -1,5 +1,4 @@
 import Knex from 'knex'
-import Bookshelf from 'bookshelf'
 import {inspectObj} from '../utils'
 const types = require('pg').types
 
