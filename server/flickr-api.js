@@ -5,6 +5,7 @@ import {promisify} from 'util'
 import {uniq, flatMap, pick, isUndefined, isNull} from 'lodash'
 import {knex} from './db'
 import Constants from './constants'
+import {upsertFlickrGroup} from './db/queries'
 
 const {
   flickrGroupId: hardcodedFlickrGroupId,
@@ -49,14 +50,10 @@ class FlickrAPI {
    */
   async fetchPhotosFromFlickrForGroup (tagName) {
     // make sure the group is in the DB first, by upserting it
-    await knex.raw(
-      knex('flickr_groups')
-      .insert({
-        id: this.flickrGroupId,
-        name: this.flickrGroupName,
-      })
-      .toString() + ` ON CONFLICT DO NOTHING;`,
-    )
+    await upsertFlickrGroup({
+      id: this.flickrGroupId,
+      name: this.flickrGroupName,
+    })
 
     let retFromAPI
     try {

@@ -12,6 +12,8 @@ const {flickrGroupId, fetchFromFlickrInterval} = Constants
 const inFlightFlickrQueries = new Map()
 
 /**
+ * Asynchronously check if this query needs to reach Flickr, or have we fetched from it recently
+ *
  * @arg tagStringNormalised {string} - null means we are not searching by a tag at all
  *
  * @returns {undefined}

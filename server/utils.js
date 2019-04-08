@@ -1,8 +1,8 @@
-import assert from "assert"
+import assert from 'assert'
 import util from 'util'
 import {isArray} from 'lodash'
-import camelcaseKeys from "camelcase-keys"
-var parseError = require("parse-error")
+import camelcaseKeys from 'camelcase-keys'
+var parseError = require('parse-error')
 
 export const MS_IN_A_SECOND = 1000
 export const SECONDS_IN_A_MINUTE = 60
@@ -15,11 +15,18 @@ export const SECONDS_IN_A_MINUTE = 60
  *
  * @returns {Promise}
  */
-export const promiseReduce = (entries, func, {nItemsInParallel = 1, consoleLogEveryNItems, itemName='item'}={}) => {
+export const promiseReduce = (
+  entries,
+  func,
+  {nItemsInParallel = 1, consoleLogEveryNItems, itemName = 'item'} = {},
+) => {
   let entriesCloned = entries.slice()
   const getNextItem = () => {
     if (entriesCloned.length) {
-      if(consoleLogEveryNItems && (entriesCloned.length % consoleLogEveryNItems) ){
+      if (
+        consoleLogEveryNItems &&
+        entriesCloned.length % consoleLogEveryNItems
+      ) {
         console.log(`${entriesCloned.length} ${itemName}s to go`)
       }
       return func(entriesCloned.shift())
@@ -36,7 +43,7 @@ export const promiseReduce = (entries, func, {nItemsInParallel = 1, consoleLogEv
   }
 
   if (!isArray(entries)) {
-    console.dir({ entries })
+    console.dir({entries})
   }
 
   assert(isArray(entries))
@@ -52,7 +59,6 @@ export const inspectObj = obj => {
   console.log(util.inspect(obj, false, null))
 }
 
-
 /**
  * apply camelcaseKeys to every element of the array
  * @arg {object[]}
@@ -60,14 +66,14 @@ export const inspectObj = obj => {
  * @returns {object[]}
  */
 export const camelcaseKeysArray = array => {
-  if(!isArray(array)){
+  if (!isArray(array)) {
     // inspectObj({array})
     throw Error('wrong arg to camelcaseKeysArray')
   }
   return array.map(camelcaseKeys)
 }
 
-export const setTimeoutPromise = util.promisify(setTimeout);
+export const setTimeoutPromise = util.promisify(setTimeout)
 
 /**
  * Used for concurrency control.
@@ -87,11 +93,10 @@ export const asyncWaitUntilTrue = predFunc => {
   const promise = new Promise((resolve, reject) => {
     const checkAndResolveIfPredTrue = () => {
       if (predFunc()) {
-        console.log('resolving')
+        // console.log('resolving')
         resolve()
-      }
-      else{
-        console.log('waiting...')
+      } else {
+        // console.log('waiting...')
         setImmediate(checkAndResolveIfPredTrue)
       }
     }
@@ -100,4 +105,5 @@ export const asyncWaitUntilTrue = predFunc => {
   return promise
 }
 
-export const asyncWaitUntilFalse = predFunc => asyncWaitUntilTrue(() => !predFunc())
+export const asyncWaitUntilFalse = predFunc =>
+  asyncWaitUntilTrue(() => !predFunc())
