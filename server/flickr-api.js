@@ -2,7 +2,7 @@ import {inspectObj, promiseReduce} from './utils'
 import {RateLimiter} from 'limiter'
 import Flickr from 'flickrapi'
 import {promisify} from 'util'
-import {uniq, flatMap, pick} from 'lodash'
+import {uniq, flatMap, pick, isUndefined, isNull} from 'lodash'
 import {knex} from './db'
 import Constants from './constants'
 
@@ -66,7 +66,7 @@ class FlickrAPI {
         per_page: maxPhotosInGallery,
         extras: ['tags'],
       }
-      if (tagName) {
+      if (!isUndefined(tagName) && !isNull(tagName)) {
         params.tags = [tagName]
       }
       retFromAPI = await this._getGroupPoolPhotosFromFlickr(params)
@@ -149,6 +149,4 @@ class FlickrAPI {
 }
 
 export const flickrAPI = new FlickrAPI()
-
-
 

@@ -1,15 +1,38 @@
 import {knex} from '../db'
 import {camelcaseKeysArray, inspectObj, setTimeoutPromise,asyncWaitUntilFalse} from '../utils'
 import Constants from '../constants'
-import {isUndefined, isEmpty} from 'lodash'
+import {isUndefined, isEmpty, isNull} from 'lodash'
 import camelcaseKeys from 'camelcase-keys'
 import {flickrAPI} from '../flickr-api.js'
 
 import {upsertTags} from '../db/queries'
 
-const {flickrGroupId} = Constants
+const {flickrGroupId, fetchFromFlickrInterval} = Constants
 
 const inFlightFlickrQueries = new Map()
+
+/**
+ * @arg tagStringNormalised {string} - null means we are not searching by a tag at all
+ *
+ * @returns {undefined}
+ */
+const shouldFetchQueryFromFlickr = async (tagStringNormalised) => {
+  const qbNeedToFetch = knex('flickr_searches').first('*')
+  if (!isNull(tagStringNormalised)) {
+    qbNeedToFetch
+      .innerJoin('tags', 'tags.id', 'flickr_searches.tag_id')
+      .where('tags.name', tagStringNormalised)
+  } else {
+    qbNeedToFetch.whereNull('flickr_searches.tag_id')
+  }
+  qbNeedToFetch.andWhereRaw(
+    `flickr_searches.searched_at >= (now() - INTERVAL '${fetchFromFlickrInterval}')`,
+  )
+
+  const hasFetchedRecently = await qbNeedToFetch
+  inspectObj({hasFetchedRecently})
+  return isUndefined(hasFetchedRecently)
+}
 
 /**
  * The main API entry point
@@ -36,33 +59,19 @@ export const getPhotos = async (__, args, context) => {
   console.log('getPhotos: ')
   inspectObj({pageSize, tagStringNormalised, pageOffset})
 
+  const hasFlickrQueryInFlight = () => inFlightFlickrQueries.has(searchQueryKey)
+
   /*
    * If we have to fetch it from Flickr's API, we do that first, which will then polulate the SQL DB
    * Either way, we return the result from the SQL DB
    */
-  if (inFlightFlickrQueries.has(searchQueryKey)) {
+  if (hasFlickrQueryInFlight()) {
     // there's a flickr query in flight for this query, wait for it to finish and then return
     console.log('query already in flight: ', searchQueryKey)
-    await asyncWaitUntilFalse(() => inFlightFlickrQueries.has(searchQueryKey))
+    await asyncWaitUntilFalse(hasFlickrQueryInFlight)
   }
   else{
-    const fetchFromFlickrInterval = '30 minutes'
-
-    const qbNeedToFetch = knex('flickr_searches').first('*')
-    if (hasTagString) {
-      qbNeedToFetch
-        .innerJoin('tags', 'tags.id', 'flickr_searches.tag_id')
-        .where('tags.name', tagStringNormalised)
-    } else {
-      qbNeedToFetch.whereNull('flickr_searches.tag_id')
-    }
-    qbNeedToFetch.andWhereRaw(
-      `flickr_searches.searched_at >= (now() - INTERVAL '${fetchFromFlickrInterval}')`,
-    )
-
-    const hasFetchedRecently = await qbNeedToFetch
-    inspectObj({hasFetchedRecently})
-    if (!hasFetchedRecently) {
+    if ((await shouldFetchQueryFromFlickr(tagStringNormalised))) {
       //set the query as inFlight
       inFlightFlickrQueries.set(searchQueryKey, true)
       if (hasTagString) {
@@ -70,11 +79,8 @@ export const getPhotos = async (__, args, context) => {
         await upsertTags([tagStringNormalised])
       }
 
-      //wait
-      // await setTimeoutPromise(5000)
-
       await flickrAPI.init()
-      await flickrAPI.fetchPhotosFromFlickrForGroup()
+      await flickrAPI.fetchPhotosFromFlickrForGroup(tagStringNormalised)
 
       //record the search
       if (hasTagString) {

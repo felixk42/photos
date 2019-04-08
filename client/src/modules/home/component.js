@@ -55,7 +55,7 @@ const getPhotosQuery = gql`
   }
 `
 
-const initialPageSize = 20
+const initialPageSize = 10
 
 class Home extends React.Component {
   constructor(props) {
@@ -156,7 +156,13 @@ class Home extends React.Component {
                         // loader={<div className="loader" key={0}>Loading ...</div>}
                         useWindow={true}
                         id={this.state.tagValue}
-                        initialLoad={true}>
+                        initialLoad={true}
+                      >
+                        <div className='Aligner-vertical-flex no-photos-alert'>
+                          {this.state.photos.length === 0 && !this.state.hasMorePhotos &&
+                              (<Alert color='warning'> No Photos Matching This Tag </Alert>)
+                          }
+                        </div>
                         <Row>
                           {this.state.photos.map(photo => (
                             <Col
@@ -166,9 +172,6 @@ class Home extends React.Component {
                             </Col>
                           ))}
                         </Row>
-                        <div className='Aligner-vertical-flex no-photos-alert'>
-                          {this.state.photos.length === 0 && (<Alert color='warning'> No Photos Matching This Tag </Alert>)}
-                        </div>
                       </InfiniteScroll>
                     </Container>
                   )}
