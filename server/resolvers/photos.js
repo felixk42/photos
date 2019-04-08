@@ -81,9 +81,6 @@ export const getPhotos = async (__, args, context) => {
         await upsertTags([tagStringNormalised])
       }
 
-      await flickrAPI.init()
-      await flickrAPI.fetchPhotosFromFlickrForGroup(tagStringNormalised)
-
       //record the search
       if (hasTagString) {
         await knex.raw(
@@ -99,6 +96,10 @@ export const getPhotos = async (__, args, context) => {
       } else {
         await knex('flickr_searches').insert({tag_id: null, searched_at: 'now()'})
       }
+
+      await flickrAPI.init()
+      await flickrAPI.fetchPhotosFromFlickrForGroup(tagStringNormalised)
+
 
       //finally, mark it as not in flight anymore
       inFlightFlickrQueries.delete(searchQueryKey)
