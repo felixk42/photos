@@ -5,12 +5,14 @@ import {isUndefined, isEmpty, isNull} from 'lodash'
 import camelcaseKeys from 'camelcase-keys'
 import {flickrAPI} from '../flickr-api.js'
 
-import {upsertTags} from '../db/queries'
+import {upsertTags, recordFlickrSearchSQL} from '../db/queries'
 
 const {flickrGroupId, fetchFromFlickrInterval} = Constants
 
 const inFlightFlickrQueries = new Map()
-
+const markFlickrQueryAsInFlight = searchQueryKey => inFlightFlickrQueries.set(searchQueryKey, true)
+const markFlickrQueryAsNotInFlight = searchQueryKey => inFlightFlickrQueries.delete(searchQueryKey, true)
+const isFlickrQueryInFlight = searchQueryKey => inFlightFlickrQueries.has(searchQueryKey)
 /**
  * Asynchronously check if this query needs to reach Flickr, or have we fetched from it recently
  *
@@ -32,18 +34,16 @@ const shouldFetchQueryFromFlickr = async (tagStringNormalised) => {
   )
 
   const hasFetchedRecently = await qbNeedToFetch
-  inspectObj({hasFetchedRecently})
   return isUndefined(hasFetchedRecently)
 }
 
 /**
- * The main API entry point
+ * The main API entry point, implemented as a GraphQL resolver
  * Provides paginated photos, optionally requiring them to have the specified tag
  * @arg args.tagString
  * @arg args.pageOffset
  * @arg args.pageSize
  *
- * @returns {undefined}
  */
 export const getPhotos = async (__, args, context) => {
   const pageOffset = isUndefined(args.pageOffset) ? 0 : args.pageOffset
@@ -61,47 +61,31 @@ export const getPhotos = async (__, args, context) => {
   console.log('getPhotos: ')
   inspectObj({pageSize, tagStringNormalised, pageOffset})
 
-  const hasFlickrQueryInFlight = () => inFlightFlickrQueries.has(searchQueryKey)
+  const hasFlickrQueryInFlightPred = () => isFlickrQueryInFlight(searchQueryKey)
 
   /*
    * If we have to fetch it from Flickr's API, we do that first, which will then polulate the SQL DB
-   * Either way, we return the result from the SQL DB
+   * After this step, we return the result from the SQL DB
    */
-  if (hasFlickrQueryInFlight()) {
-    // there's a flickr query in flight for this query, wait for it to finish and then return
+  if (hasFlickrQueryInFlightPred()) {
+    // there's a flickr query in flight for this query, wait for it to finish before proceeding, don't initiate another one
     console.log('query already in flight: ', searchQueryKey)
-    await asyncWaitUntilFalse(hasFlickrQueryInFlight)
+    await asyncWaitUntilFalse(hasFlickrQueryInFlightPred)
     console.log('query finished, continuing: ', searchQueryKey)
   }
   else{
     if ((await shouldFetchQueryFromFlickr(tagStringNormalised))) {
       //set the query as inFlight
-      inFlightFlickrQueries.set(searchQueryKey, true)
-
-      console.log('query marked as inFlight', tagStringNormalised)
+      markFlickrQueryAsInFlight(searchQueryKey)
+      // console.log('query marked as inFlight', tagStringNormalised)
 
       if (hasTagString) {
-        //The search may have no result, so we need to upsert the tagId
+        //The search may have no result, so we need to upsert the tagId here
+        //So we know not to make the call again
         await upsertTags([tagStringNormalised])
       }
       console.log('query tagStringNormalised upserted', tagStringNormalised)
-
-      //record the search
-      if (hasTagString) {
-        await knex.raw(
-          `
-          insert into flickr_searches (tag_id, searched_at)
-          select tags.id, now() as searched_at from tags
-          WHERE tags.name = :tag_name
-          ON CONFLICT ON CONSTRAINT flickr_searches_tag_id_unique
-            DO UPDATE SET (searched_at) = (excluded.searched_at)
-          ;`,
-          {tag_name: tagStringNormalised},
-        )
-      } else {
-        await knex('flickr_searches').insert({tag_id: null, searched_at: 'now()'})
-      }
-
+      await recordFlickrSearchSQL({tagStringNormalised})
       console.log('search recorded in SQL', tagStringNormalised)
 
       await flickrAPI.init()
@@ -110,23 +94,29 @@ export const getPhotos = async (__, args, context) => {
 
 
       //finally, mark it as not in flight anymore
-      inFlightFlickrQueries.delete(searchQueryKey)
+      markFlickrQueryAsNotInFlight(searchQueryKey)
       console.log('Marked as finished', tagStringNormalised)
     }
   }
 
   console.log('returning request from SQL: ', {tagStringNormalised, pageSize, pageOffset})
 
+  /*
+   * Return the result from SQL
+    * */
+
   const qb = knex('photos')
     .select('photos.*')
     .where('flickr_group_id', flickrGroupId)
 
   if (hasTagString) {
+    // Inner join with photos_tags to filter by the tag
     qb.innerJoin('photos_tags', 'photos_tags.photo_id', 'photos.id')
       .innerJoin('tags', 'tags.id', 'photos_tags.tag_id')
       .andWhere('tags.name', tagStringNormalised)
   }
 
+  //Pagination
   qb.orderBy('fetched_at', 'desc').limit(pageSize).offset(pageOffset)
 
   const photos = camelcaseKeysArray(await qb)
@@ -154,6 +144,7 @@ export const getPhoto = async (__, {id}, context) => {
 export const resolvers = {
   Photo: {
     url: (photo, args, context) => {
+      //Construct the Flickr image link for (thisPhoto, size)
       //refer to https://www.flickr.com/services/api/misc.urls.html for full details
       const {farm: farmId, secret, server: serverId, id: photoId} = photo
       const size = isUndefined(args.size) ? 'z' : args.size
@@ -161,11 +152,13 @@ export const resolvers = {
       return `https://farm${farmId}.staticflickr.com/${serverId}/${photoId}_${secret}_${size}.jpg`
     },
     flickrPhotoPageUrl: async (photo, args, context) => {
+      //Construct the Flickr page link for this photo
       return `https://www.flickr.com/photos/${photo.ownerFlickrUserId}/${
         photo.id
       }`
     },
     tags: async (photo, __, context) => {
+      //Get all its tags
       return camelcaseKeysArray(
         await knex('tags')
           .select('tags.*')

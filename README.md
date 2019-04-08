@@ -2,11 +2,12 @@ Preamble
 --------------
 
 Main Concerns:
-* API rate limiting (Flickr) - for simplicity we can use a simple, non-distributed generic rate limiter, such as [node-rate-limiter](https://github.com/jhurliman/node-rate-limiter) to rate-limit how often we request data from Flickr
-  * This is also very likely the first major constraint we will run up against in scaling up.
+* API rate limiting (Flickr) 
+  * This is very likely the first major constraint we will run up against in scaling up.
   * Likewise, if we keep making requests to it our user will experience a slow system, because both individual requests take time, and all users will have to wait if we exhaust our limit.
   * So where possible, we minimise requests to it by caching.
   * For now, we don't serve the actual images ourselves, for our solution to scale we will need to either get acommercial account with Flickr that provides enough bandwidth, or cache and serve the images ourselves.
+  * For simplicity we can use a simple, non-distributed generic rate limiter, such as [node-rate-limiter](https://github.com/jhurliman/node-rate-limiter) to rate-limit how often we request data from Flickr
 * API rate limiting (Requests to us) - we don't implement this here, but a public / B2C API where black-listing users in general needs this to deal with DDoS attacks and badly implemented clients / web crawlers. At scale, distributed approaches may be necessary.
 * In general, integrating with an external data source means we have to deal with 1. additional data, 2. deleted data and 3. edited data.
   * Given the time constraint we cannot implement this, but a high level design would depend on what the business context of our service is, copyright and other regulatory needs.

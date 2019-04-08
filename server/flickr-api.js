@@ -5,12 +5,22 @@ import {promisify} from 'util'
 import {uniq, flatMap, pick, isUndefined, isNull, isEmpty} from 'lodash'
 import {knex} from './db'
 import Constants from './constants'
-import {upsertFlickrGroup} from './db/queries'
+import {
+  upsertFlickrGroup,
+  upsertTags,
+  upsertPhotosTags,
+  upsertPhotos,upsertFlickrUsers
+} from './db/queries'
+
+import performanceNow from 'performance-now'
 
 const {
   flickrGroupId: hardcodedFlickrGroupId,
   flickrGroupName: hardcodedFlickrGroupName,
-  apiKey, apiSecret,maxPhotosInGallery
+  apiKey,
+  apiSecret,
+  maxPhotosInGallery,
+  nFlickrRequestsPerMinute,
 } = Constants
 
 const flickrOptions = {
@@ -19,24 +29,27 @@ const flickrOptions = {
 }
 
 /**
- * we can only have 1 of this, TODO: make this into a singleton or Borg
+ * we can only have 1 of this (due to rate limiting)
+ * TODO: make this into a singleton or Borg
  */
 class FlickrAPI {
-  constructor(){
+  constructor() {
     this.initialised = false
-    this.rateLimiter = new RateLimiter(100, 'minute')
+    this.rateLimiter = new RateLimiter(nFlickrRequestsPerMinute, 'minute')
     this.flickrGroupId = hardcodedFlickrGroupId
     this.flickrGroupName = hardcodedFlickrGroupName
   }
-  async init(){
-    if(this.initialised){
+  async init() {
+    if (this.initialised) {
       return
     }
     this._flickrAPI = await promisify(Flickr.tokenOnly)(flickrOptions)
-    this._getGroupPoolPhotosFromFlickr = promisify(this._flickrAPI.groups.pools.getPhotos)
+    this._getGroupPoolPhotosFromFlickr = promisify(
+      this._flickrAPI.groups.pools.getPhotos,
+    )
   }
 
-  tagsOfPhotoFromFlickr (photo) {
+  tagsOfPhotoFromFlickr(photo) {
     if (!photo.tags) {
       return []
     }
@@ -48,12 +61,17 @@ class FlickrAPI {
    * @arg tagName {string} - optional, search for those that has the tag if provided
    *
    */
-  async fetchPhotosFromFlickrForGroup (tagName) {
+  async fetchPhotosFromFlickrForGroup(tagName) {
     // make sure the group is in the DB first, by upserting it
     await upsertFlickrGroup({
       id: this.flickrGroupId,
       name: this.flickrGroupName,
     })
+
+    //Wait for the rate limit (if we have hit it)
+    console.log('Checking Flickr rate-limit...')
+    await promisify(this.rateLimiter.removeTokens.bind(this.rateLimiter))(1)
+    console.log('Checked Flickr rate-limit, proceeding')
 
     let retFromAPI
     try {
@@ -66,7 +84,11 @@ class FlickrAPI {
       if (!isUndefined(tagName) && !isNull(tagName)) {
         params.tags = [tagName]
       }
+
+      const t0 = performanceNow()
       retFromAPI = await this._getGroupPoolPhotosFromFlickr(params)
+      const t1 = performanceNow()
+      // console.log(`Flickr API took ${t1 - t0} ms`)
     } catch (error) {
       //bail
       console.error('getPublicPhotos threw an error:')
@@ -81,79 +103,52 @@ class FlickrAPI {
     /*
      * the api gives us space separated tags
      * */
-    const allTags = uniq(flatMap(photos, this.tagsOfPhotoFromFlickr))
-    if(!isEmpty(allTags)){
-      console.log(`inserting ${allTags.length} tags`)
-      // inspectObj({allTags})
-      //insert all the tags, if they are not already there
-      const upsertedTags = await knex.raw(
-        knex('tags')
-        .insert(allTags.map(tag => ({name: tag})))
-        .toString() + ` ON CONFLICT ON CONSTRAINT unique_name DO NOTHING;`,
-      )
-      console.log('inserted all tags')
-    }
+    const allTagNames = uniq(flatMap(photos, this.tagsOfPhotoFromFlickr))
+    console.log(`inserting ${allTagNames.length} tags`)
+    // inspectObj({allTags})
+    //Insert all the tags, if they are not already there
+    await upsertTags(allTagNames)
+    console.log('inserted all tags')
     //same with flickr users
     const flickrUsers = uniq(
       photos.map(photo => ({id: photo.owner, name: photo.ownername})),
     )
+
     // inspectObj({flickrUsers})
-    if(!isEmpty(flickrUsers)){
-      await knex.raw(
-        knex('flickr_users')
-        .insert(flickrUsers)
-        .toString() + ` ON CONFLICT DO NOTHING;`,
-      )
-    }
+    await upsertFlickrUsers(flickrUsers)
+    console.log('upserted all flickrUsers')
 
-    console.log('upserted all flickr_users')
-
-    if(!isEmpty(photos)){
-
-      // inspectObj({photo0: photos[0]})
-      await knex.raw(
-        knex('photos')
-        .insert(
-          photos.map(photo =>
-            Object.assign(
-              pick(photo, ['id', 'secret', 'title', 'farm', 'server']),
-              {
-                flickr_group_id: this.flickrGroupId,
-                owner_flickr_user_id: photo.owner,
-                fetched_at: 'now()'
-              },
-            ),
-          ),
-        )
-        .toString() + ` ON CONFLICT DO NOTHING;`,
-      )
-    }
+    // inspectObj({photo0: photos[0]})
+    await upsertPhotos(
+      photos.map(photo =>
+        Object.assign(
+          pick(photo, ['id', 'secret', 'title', 'farm', 'server']),
+          {
+            flickr_group_id: this.flickrGroupId,
+            owner_flickr_user_id: photo.owner,
+            fetched_at: 'now()',
+          },
+        ),
+      ),
+    )
     console.log('upserted all photos')
 
     //finally the photos_tags table
     const tagsFromDB = await knex('tags')
       .select('id', 'name')
-      .whereIn('name', allTags)
+      .whereIn('name', allTagNames)
     const tagNameToIdName = new Map(tagsFromDB.map(tag => [tag.name, tag.id]))
 
     const photosTagsToUpsert = flatMap(photos, photo =>
-          this.tagsOfPhotoFromFlickr(photo).map(tagName => ({
-            tag_id: tagNameToIdName.get(tagName),
-            photo_id: photo.id,
-          }))
+      this.tagsOfPhotoFromFlickr(photo).map(tagName => ({
+        tag_id: tagNameToIdName.get(tagName),
+        photo_id: photo.id,
+      })),
     )
+    await upsertPhotosTags(photosTagsToUpsert)
     // inspectObj({photosTagsToUpsert})
-    if(!isEmpty(photosTagsToUpsert)){
-      await knex.raw(
-        knex('photos_tags')
-        .insert(photosTagsToUpsert)
-        .toString() + ` ON CONFLICT DO NOTHING;`,
-      )
-    }
     console.log('upserted all photosTags')
-
   }
 }
 
 export const flickrAPI = new FlickrAPI()
-

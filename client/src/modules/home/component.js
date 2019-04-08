@@ -156,19 +156,25 @@ class Home extends React.Component {
                         // loader={<div className="loader" key={0}>Loading ...</div>}
                         useWindow={true}
                         id={this.state.tagValue}
-                        initialLoad={true}
-                      >
-                        <div className='Aligner-vertical-flex no-photos-alert'>
-                          {this.state.photos.length === 0 && !this.state.hasMorePhotos &&
-                              (<Alert color='warning'> No Photos Matching This Tag </Alert>)
-                          }
-                        </div>
+                        initialLoad={true}>
+                        {this.state.photos.length === 0 &&
+                          !this.state.hasMorePhotos && (
+                            <div className="Aligner-vertical-flex no-photos-alert">
+                              <Alert color="warning">
+                                {' '}
+                                No Photos Matching This Tag{' '}
+                              </Alert>
+                            </div>
+                          )}
                         <Row>
                           {this.state.photos.map(photo => (
                             <Col
                               className="col-12 col-md-6 col-xl-4"
                               key={'col-' + photo.id}>
-                              <PhotoCard photo={photo} key={'photo-card-' + photo.id} />
+                              <PhotoCard
+                                photo={photo}
+                                key={'photo-card-' + photo.id}
+                              />
                             </Col>
                           ))}
                         </Row>
