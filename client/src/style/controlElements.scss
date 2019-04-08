@@ -1,0 +1,27 @@
+@import 'src/variables';
+
+.btn-primary:not(:disabled):hover{
+  color: white;
+}
+
+.btn svg:not(:root):not(:first-child).svg-inline--fa{
+// .btn svg:not(root).svg-inline--fa{
+  margin-left: 1em;
+}
+
+.btn-outline-primary:hover{
+  color: white;
+}
+
+
+.a-entire-card {
+  position: absolute;
+  top: 0; left: 0;
+  height: 100%; width: 100%;
+}
+
+.card{
+  border: none;
+}
+
+

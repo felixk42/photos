@@ -1,0 +1,32 @@
+@import './variables';
+
+.modal-content{
+  border-radius: 2px;
+}
+
+.modal-header{
+  border-top-left-radius: 2px;
+  border-top-right-radius: 2px;
+  background: map-get($greyscale, gs02);
+  border-bottom: none;
+  // h4 {
+    // color: black;
+  // }
+}
+
+.modal-header-2{
+  background: map-get($greyscale, gs01);
+  text-align: center;
+  padding: 10px;
+}
+
+@media (min-width: map-get($grid-breakpoints, sm)){
+  .modal-dialog{
+    max-width: 520px;
+  }
+
+}
+
+.danger-modal-header{
+  background: $dangerRed;
+}

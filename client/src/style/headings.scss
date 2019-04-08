@@ -1,0 +1,36 @@
+@import 'src/variables';
+
+.login-container{
+
+  h1{
+    margin-left: 10%;
+  }
+
+  /*  three sections: black, transparent , then black again */
+  h1+hr {
+    margin-left: 10%;
+    border-top: 6px solid black;
+  }
+
+  h1+hr:before{
+    margin-top: 0;
+    margin-right: 80%;
+    border-top: 6px solid black;
+    position: relative;
+    top: -6px;
+    display: block;
+    width: 10%;
+    right: 20%;
+    height: 0;
+    content: '';
+  }
+}
+
+
+h1{
+}
+
+/*  three sections: black, transparent , then black again */
+h1+hr {
+  border-top: 4px solid black;
+}

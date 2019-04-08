@@ -1,0 +1,55 @@
+.input-group-addon {
+  background-color: transparent;
+  border: none;
+}
+
+.form-control {
+  // border-radius: 0px;
+}
+
+.form-control:disabled {
+  background: transparent;
+  border-top: none;
+  border-right: none;
+  border-left: none;
+  border-bottom: 1mm solid;
+  border-radius: 0px;
+}
+
+.tooltip-icon{
+  background-color: #3ba2d6;
+  color: white;
+  padding-right: 10px;
+  padding-left: 10px;
+  padding-bottom: 5px;
+  padding-top: 5px;
+  /* border: 5px none; */
+  border-radius: 5px;
+  margin-top: auto;
+  margin-bottom: auto;
+}
+
+.invalid-feedback {
+  display: block;
+  text-align: left;
+}
+
+.form-group-checkbox {
+  margin-bottom: 0.5rem;
+  padding-top: 0.5rem;
+  padding-bottom: 1rem;
+}
+
+.form-group-checkbox:first-child {
+  padding-top: 1rem;
+}
+
+.input-row > .col {
+  display: flex;
+  align-items: center;
+}
+
+select{
+  // -webkit-appearance: none;
+  // -webkit-border-radius: 0px;
+}

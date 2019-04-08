@@ -1,0 +1,124 @@
+@import 'src/variables';
+
+body{
+  background-color: map-get($greyscale, gs03);
+  padding-top: $topBarHeight;
+}
+
+@import 'assets/fontawesome-free-5.0.10/web-fonts-with-css/css/fontawesome-all.css';
+
+.top-level-container{
+  padding-top: 30px;
+}
+
+.dropdown-header{
+  color: $grey;
+}
+
+.dropdown-menu{
+  border-radius: 0.0rem;
+  background-color: map-get($greyscale, gs06);
+}
+
+.dropdown-item{
+  color: $grey;
+}
+
+
+input:invalid {
+  // border: 1px solid red;
+}
+
+input:valid {
+}
+
+.list-group-item{
+  border: none
+}
+
+.Aligner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.Aligner-flex-vertical{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.Aligner-item {
+  max-width: 50%;
+}
+
+.thin-card-text{
+}
+
+.btn {
+  margin-bottom: 5px;
+  margin-top: 5px;
+  margin-right: 5px;
+  margin-left: 5px;
+}
+
+.input-row{
+  margin-top: 0rem;
+  margin-bottom: 1rem;
+}
+
+
+.home-div{
+  padding-top: 20px;
+  // margin-top: -20px;
+  // background-image: url('assets/sky-resized.png');
+  // background-size: cover;
+  // min-height: 100vh;
+  // padding-top: 10px;
+}
+
+// .btn-secondary .hover{
+  // background-color:$pink;
+// }
+
+@media (min-width: 990px) {
+  .with-max-width{
+    max-width: 800px;
+  }
+}
+
+.breadcrumb{
+  background-color: $grey;
+}
+
+
+
+.btn:focus, .btn:active {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.btn-primary > a{
+  color: white;
+}
+
+.version-footer{
+  text-align: center;
+  // background-color: $darkGrey;
+  color: $veryDarkGrey;
+  margin: 10px
+}
+
+.black {
+  color: black;
+}
+
+.wrap-words{
+  word-wrap: break-word;
+}
+
+.hidden{
+  display: none;
+}
+
+

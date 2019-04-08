@@ -1,0 +1,76 @@
+$topBarHeight: 70px;
+
+$greyscale: (
+  whiteOrOffWhite: #ffffff,
+  gs00point5: #f8f8f8,
+  offWhite: #fdfdfd,
+  gs01: #f0f0f0,
+  gs02: #d9d9d9,
+  gs03: #bfbfbf,
+  gs04: #999999,
+  gs05: #666666,
+  gs06: #333333,
+  gs07: #000000
+);
+
+$primaryBlue :#0091dc ;
+
+$veryLightGrey: #f9f9f9;
+$grey: map-get($greyscale, gs02);
+$slightlyDarkGrey: map-get($greyscale, gs03);
+$darkGrey: map-get($greyscale, gs04);
+$extraDarkGrey: map-get($greyscale, gs05);
+$veryDarkGrey: map-get($greyscale, gs06);
+
+$dangerRed: #e20c2a;
+$darkBlue: #206288;
+$pink: #d54e86;
+$grey: #e6e6e6;
+
+$traffic-light-red-0: #ea3d4a;
+$traffic-light-red-1: #ea3d4a;
+
+$traffic-light-green-0: #80d362;
+$traffic-light-green-1: #80d362;
+
+$traffic-light-yellow-0: #f4ac1c;
+$traffic-light-yellow-1: #f4ac1c;
+
+$theme-colors: (
+  'primary': $primaryBlue,
+  'secondary': $darkGrey,
+);
+
+
+$darkerGreen: #3ace96;
+$brigtPink: #fe58a0;
+$brightGreen: #31f2c3;
+$brightYellow: #ffe603;
+
+.darkBlue {
+  color: $darkBlue;
+}
+
+@mixin responsive-font($responsive, $min, $max: false, $fallback: false) {
+  $responsive-unitless: $responsive / ($responsive - $responsive + 1);
+  $dimension: if(unit($responsive) == 'vh', 'height', 'width');
+  $min-breakpoint: $min / $responsive-unitless * 100;
+
+  @media (max-#{$dimension}: #{$min-breakpoint}) {
+    font-size: $min;
+  }
+
+  @if $max {
+    $max-breakpoint: $max / $responsive-unitless * 100;
+
+    @media (min-#{$dimension}: #{$max-breakpoint}) {
+      font-size: $max;
+    }
+  }
+
+  @if $fallback {
+    font-size: $fallback;
+  }
+
+  font-size: $responsive;
+}

@@ -1,0 +1,25 @@
+@import 'src/variables';
+
+.responsive-img{
+  width: 100%;
+  height: auto;
+}
+
+.photo-container{
+  padding: 20px;
+}
+
+.photo-info-card{
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+
+.photo-tag{
+  padding: 5px;
+  margin: 5px;
+  border-radius: 5px;
+  color: white;
+  background-color: map-get($theme-colors, primary);
+}
+

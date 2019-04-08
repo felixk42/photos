@@ -1,0 +1,27 @@
+version: "3"
+services:
+  # backend:
+    # build: .
+    # ports:
+      # - 3000:3000
+    # command: bash -c 'while !</dev/tcp/db/5432; do sleep 1; done; npm start'
+    # depends_on:
+      # - postgres
+    # environment:
+      # PORT: 3000
+    # volumes:
+      # - .:/opt/app
+      # - reserved:/opt/app/node_modules/
+  postgres:
+    image: postgres:9.6
+    ports:
+      - 7432:5432
+    environment:
+      POSTGRES_USER: photos_app
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: photos_app
+    volumes:
+      - ./docker-data-dir/postgres:/var/lib/postgresql/data
+
+volumes:
+  reserved:

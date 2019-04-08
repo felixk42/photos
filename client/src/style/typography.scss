@@ -1,0 +1,40 @@
+@import 'src/variables';
+
+body{
+  font-family: 'Roboto';
+  font-weight: normal;
+}
+
+label{
+  font-family: Roboto;
+}
+
+
+
+h1, h2, h3, h4{
+  color: map-get($greyscale, gs06);
+  text-align: left;
+  font-family: 'GT-Haptik', sans-serif;
+}
+
+h1 {
+  font-size: 1.6rem;
+  font-weight: bold;
+  color: map-get($greyscale, gs07);
+}
+
+
+h2 {
+  font-weight: bold;
+  font-size: 1.5rem;
+}
+
+
+h3{
+  color: $darkBlue;
+  font-size: 1.25rem;
+  font-style: italic;
+  font-weight: normal;
+}
+
+
