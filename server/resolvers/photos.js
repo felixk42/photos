@@ -71,15 +71,20 @@ export const getPhotos = async (__, args, context) => {
     // there's a flickr query in flight for this query, wait for it to finish and then return
     console.log('query already in flight: ', searchQueryKey)
     await asyncWaitUntilFalse(hasFlickrQueryInFlight)
+    console.log('query finished, continuing: ', searchQueryKey)
   }
   else{
     if ((await shouldFetchQueryFromFlickr(tagStringNormalised))) {
       //set the query as inFlight
       inFlightFlickrQueries.set(searchQueryKey, true)
+
+      console.log('query marked as inFlight', tagStringNormalised)
+
       if (hasTagString) {
         //The search may have no result, so we need to upsert the tagId
         await upsertTags([tagStringNormalised])
       }
+      console.log('query tagStringNormalised upserted', tagStringNormalised)
 
       //record the search
       if (hasTagString) {
@@ -97,14 +102,20 @@ export const getPhotos = async (__, args, context) => {
         await knex('flickr_searches').insert({tag_id: null, searched_at: 'now()'})
       }
 
+      console.log('search recorded in SQL', tagStringNormalised)
+
       await flickrAPI.init()
       await flickrAPI.fetchPhotosFromFlickrForGroup(tagStringNormalised)
+      console.log('Flickr API request finished', tagStringNormalised)
 
 
       //finally, mark it as not in flight anymore
       inFlightFlickrQueries.delete(searchQueryKey)
+      console.log('Marked as finished', tagStringNormalised)
     }
   }
+
+  console.log('returning request from SQL: ', {tagStringNormalised, pageSize, pageOffset})
 
   const qb = knex('photos')
     .select('photos.*')
