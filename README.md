@@ -111,6 +111,7 @@ My approach to testings would be:
   * Case example: if you search for the tag 'chair' and it can be satisfied internally, all the returned photos should have 'chair' as a tag in them
   * Case example: within the paging limit, all the photos with the tag 'chair' should be so returned for a query asking for the tag 'chair'
   * Paging logic: use a synthetic feed of 5 pages of photos, checking that we do get all of them
+  * Performance and multiple concurrent requests: check that we perform reasonably well and that multiple concurrent requests return consistent results.
 
 
 * Flickr API integration test (E2E):
