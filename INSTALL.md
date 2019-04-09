@@ -56,9 +56,9 @@ sudo /etc/init.d/postgresql restart
 
 Then in psql:
 ```
-create role photos\_app with createdb;
-alter role photos\_app with login;
-alter role photos\_app with password 'password';
+create role photos_app with createdb;
+alter role photos_app with login;
+alter role photos_app with password 'password';
 ```
 
 Then you can run the migration(s) by running
