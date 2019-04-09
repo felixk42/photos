@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@babel/register": "^7.4.0",
+    "@babel/runtime": "^7.4.3",
     "@ljharb/eslint-config": "^12.2.1",
     "apollo-fetch": "^0.7.0",
     "apollo-server-express": "1.3.2",
@@ -16,21 +18,16 @@
     "babel-plugin-transform-runtime": "^6.23.0",
     "babel-polyfill": "^6.26.0",
     "babel-preset-env": "^1.6.0",
-    "babel-preset-es2015": "^6.24.1",
     "babel-preset-es2016": "^6.24.1",
     "babel-preset-stage-0": "^6.24.1",
     "babel-runtime": "^6.26.0",
-    "babel-watch": "^2.0.8",
+    "babel-watch": "7.0",
     "better-require": "0.0.3",
     "body-parser": "^1.17.2",
     "camelcase": "^5.0.0",
     "camelcase-keys": "^4.1.0",
     "chalk": "1.1.3",
     "compression-webpack-plugin": "^1.0.1",
-    "html-webpack-plugin": "^2.30.1",
-    "webpack": "2.6.1",
-    "webpack-dev-server": "2.5.0",
-    "webpack-manifest-plugin": "1.1.0",
     "concurrently": "^3.6.1",
     "dotenv": "4.0.0",
     "dotenv-expand": "^4.0.1",
@@ -56,6 +53,7 @@
     "graphql-tag": "^2.10.0",
     "graphql-tools": "2.21.0",
     "graphql-type-json": "^0.2.1",
+    "html-webpack-plugin": "^2.30.1",
     "inquirer": "^3.3.0",
     "jsonwebtoken": "^8.1.0",
     "knex": "0.16.3",
@@ -83,6 +81,9 @@
     "snakecase-keys": "^1.2.0",
     "string-to-stream": "^1.1.1",
     "tmp": "^0.0.33",
+    "webpack": "2.6.1",
+    "webpack-dev-server": "2.5.0",
+    "webpack-manifest-plugin": "1.1.0",
     "whatwg-fetch": "^2.0.3",
     "xhr": "^2.5.0",
     "xml-js": "^1.6.11"
@@ -94,24 +95,13 @@
     "server-with-env": "eval $(./scripts/ecosystem-env.js local) && yarn server",
     "client": "node ./scripts/start-client.js",
     "build": ". ./.env && pushd ./client && node ./scripts/build.js && popd",
-    "genUser": ". ./.env && babel-node ./scripts/genUser.js",
     "headlessTest": "karma start --single-run --browsers ChromeHeadless karma.conf.js",
-    "mochaTest": "",
-    "runTestDotJs": "eval $(./scripts/ecosystem-env.js local) && babel-node ./test.js",
-    "dangerousDBFromScript": "eval $(./scripts/ecosystem-env.js local) && (dropdb -U \"$POSTGRES_USER\" --if-exists \"$POSTGRES_DB\"; createdb -U \"$POSTGRES_USER\" \"$POSTGRES_DB\") && knex migrate:latest && knex seed:run",
-    "dangerousDBFromDumpNoEnv": "export PGPASSWORD=$POSTGRES_PASSWORD && (dropdb -U \"$POSTGRES_USER\" --if-exists \"$POSTGRES_DB\"; createdb -U \"$POSTGRES_USER\" \"$POSTGRES_DB\") && (psql -U \"$POSTGRES_USER\" -d \"$POSTGRES_DB\" < testDBDumps/latest.dump) && knex migrate:latest",
-    "dangerousDBFromDumpStaging": "eval $(./scripts/ecosystem-env.js staging) && yarn dangerousDBFromDumpNoEnv && export PGPASSWORD=$POSTGRES_PASSWORD && echo \"GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO data_hatch; GRANT ALL PRIVILEGES ON DATABASE \"$POSTGRES_DB\" TO data_hatch;\" | psql \"$POSTGRES_DB\" -U \"$POSTGRES_USER\" ",
-    "justGrant": "eval $(./scripts/ecosystem-env.js staging) && export PGPASSWORD=$POSTGRES_PASSWORD && echo \"GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO data_hatch; GRANT ALL PRIVILEGES ON DATABASE \"$POSTGRES_DB\" TO data_hatch;\" | psql \"$POSTGRES_DB\" -U \"$POSTGRES_USER\" ",
-    "dangerousDBFromDump": "eval $(./scripts/ecosystem-env.js local) && yarn dangerousDBFromDumpNoEnv",
+    "mochaTest": "mocha  --compilers js:@babel/register",
     "migrateToLatestNoEnv": "knex migrate:latest",
     "rollbackNoEnv": "knex migrate:rollback",
     "migrateToLatest": "eval $(./scripts/ecosystem-env.js local) && yarn migrateToLatestNoEnv",
     "rollback": "eval $(./scripts/ecosystem-env.js local) && yarn rollbackNoEnv",
-    "migrateStagingRemotely": "eval $(./scripts/ecosystem-env.js localStagingDB) && yarn migrateToLatestNoEnv",
-    "rollbackStagingRemotely": "eval $(./scripts/ecosystem-env.js localStagingDB) && yarn rollbackNoEnv",
-    "migrateStagingToLatest": "eval $(./scripts/ecosystem-env.js staging) && babel-node views/dropAllViews.js && knex migrate:latest && babel-node views/refreshAllViews.js",
-    "migrateProdToLatest": "eval $(./scripts/ecosystem-env.js prod) && knex migrate:latest",
-    "genJSDocs": "yarn jsdoc -- -c jsdocConf.json -r -d docs/generatedJSDocs"
+    "migrateProdToLatest": "eval $(./scripts/ecosystem-env.js prod) && knex migrate:latest"
   },
   "jest": {
     "collectCoverageFrom": [
@@ -144,16 +134,14 @@
       "jsx"
     ]
   },
-  "babel": {
-    "presets": [
-      "es2015",
-      "stage-0"
-    ]
-  },
   "eslintConfig": {},
   "devDependencies": {
     "@babel/core": "^7.4.3",
     "@babel/node": "^7.2.2",
+    "@babel/plugin-proposal-class-properties": "^7.4.0",
+    "@babel/plugin-transform-runtime": "^7.4.3",
+    "@babel/preset-env": "^7.4.3",
+    "@babel/preset-react": "^7.0.0",
     "chai": "^4.1.2",
     "eslint-plugin-mocha": "^5.1.0",
     "karma": "^2.0.0",
