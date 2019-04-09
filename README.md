@@ -167,4 +167,7 @@ File Structure
 - [server/](server/): server
 - [package.json](package.json): server package.json
 - [server/typedefs.graphql](server/typedefs.graphql): GraphQL Schema
+- [server/resolvers/photos.js](server/resolvers/photos.js): The main API endpoint
+- [server/flickr-api.js](server/flickr-api.js): Flickr API integration
+- [server/db/queries.js](server/db/queries.js): SQL code wrappers over knex.js
 
