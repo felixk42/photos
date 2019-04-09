@@ -101,7 +101,7 @@ I haven't implemented any tests due to time constraint.
 
 My approach to testings would be:
 
-* Using Mocha/Chai or jest, implement some or all of the following, focusing on integratio level tests first
+* Using Mocha/Chai or jest, implement some or all of the following, focusing on integration level tests first
 
 * Endpoint level tests for the backend:
   * For basic regression & logic checks that the server builds and operational.
