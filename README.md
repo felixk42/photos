@@ -136,7 +136,11 @@ Assumptions and Caveats
 * The ecosystem-config.js file is committed, in the real world we won't do that.
 * The host has no SSL setup, in actual production we would definitely do that, using for example using Let's Encrypt.
 * In a real-world setup, even though all the data are public, we will still need to implement rate-limiting for both our users and how our own app talks to the 3rd party API.
-* The feed is somewhat ephermeal, if a user comes back later they may get a different feed, and have to scroll down quite far to see the photos they used to. To solve this we need to serialise the scroll position to the URL on its change, and maintain a unique ordering of photos. For example based on (fetched\_from\_flickr\_time, posted\_to\_flickr\_time) to page.
+* The feed is somewhat ephermeal, if a user comes back later they may get a different feed, and have to scroll down quite far to see the photos they saw.
+  - To solve this we need to serialise the scroll position to the URL on its change, and maintain a unique ordering of photos. For example based on (fetched\_from\_flickr\_time, posted\_to\_flickr\_time) to page, and store the relationshop of (photo, query), so we can only return the the photos we got from the specific queries.
+  
+  - For simplicity we haven't done this here.
+
 * Because the backend doesn't pageinate our requests to Flickr yet, the infinite scrolling is faux.
 
 Priorities And Potential Improvements
