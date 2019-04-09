@@ -136,7 +136,7 @@ class Home extends React.Component {
         {client => {
           return (
             <BrowserRouter>
-              <div>
+              <div className='top-level-div'>
                 <TopBar
                   apolloClient={client}
                   onSearchByTag={this.handleSearchByTag}
