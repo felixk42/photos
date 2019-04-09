@@ -139,7 +139,7 @@ Assumptions and Caveats
 * The feed is somewhat ephermeal, if a user comes back later they may get a different feed, and have to scroll down quite far to see the photos they used to. To solve this we need to serialise the scroll position to the URL on its change, and maintain a unique ordering of photos. For example based on (fetched\_from\_flickr\_time, posted\_to\_flickr\_time) to page.
 * Because the backend doesn't pageinate our requests to Flickr yet, the infinite scrolling is faux.
 
-Priorities
+Priorities And Potential Improvements
 --------------
 - I think speed is a key feature for most B2C apps, and has proven to have a serious impact on conversion
 - [Think With Google](https://www.thinkwithgoogle.com/marketing-resources/experience-design/mobile-page-speed-load-time/)
@@ -149,8 +149,8 @@ Priorities
     - Having cache hits at the edge is really the gold standard, see e.g. [Twitter Blog](http://code.flickr.net/2014/08/26/performance-improvements-for-photo-serving/)
     - Increasing cache hits to us, instead of having to go to Flickr, is likely the most effective way.
     - And returning partial results instead of waiting for a single query that fetches 200 results at once.
-2. Make the UX more intuitive and convenient on the front end, for example clicking on a tag should lead to searching for that tag.
-3. Design improvements - I am not a designer and the current visuals are bare.
+2. Make the UX more intuitive and convenient on the front end, for example clicking on a tag should lead to searching for that tag; we can get the list of most popular tags from Flickr periodically and show them as auto-complete suggestions in the search box.
+3. Visual design improvements - I am not a designer and the current visuals are bare.
 4. Collage the photos in a better way, currently it's just fixed one fixed Boostrap rows of columns of one photos, so that on larger screens we have empty spaces on each effective rows.
 4. Make the URL captures the scrolling position.
 
