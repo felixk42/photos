@@ -28,7 +28,7 @@ cd into the checked out directory
 Install tools
 -------------
 ```
-npm i -g knex@0.15.2 babel-cli
+npm i -g knex@0.15.2 @babel/cli @babel/node
 ```
 Install dependencies for server and client
 --------------

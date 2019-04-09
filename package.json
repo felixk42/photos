@@ -87,8 +87,7 @@
     "webpack-dev-server": "2.5.0",
     "webpack-manifest-plugin": "1.1.0",
     "whatwg-fetch": "^2.0.3",
-    "xhr": "^2.5.0",
-    "xml-js": "^1.6.11"
+    "xhr": "^2.5.0"
   },
   "scripts": {
     "start": "eval $(./scripts/ecosystem-env.js local) && concurrently --kill-others \"babel-watch -L --watch server server/index.js\" \"npm run client\"",
@@ -104,37 +103,6 @@
     "migrateToLatest": "eval $(./scripts/ecosystem-env.js local) && yarn migrateToLatestNoEnv",
     "rollback": "eval $(./scripts/ecosystem-env.js local) && yarn rollbackNoEnv",
     "migrateProdToLatest": "eval $(./scripts/ecosystem-env.js prod) && knex migrate:latest"
-  },
-  "jest": {
-    "collectCoverageFrom": [
-      "server/**/*.{js,jsx}"
-    ],
-    "setupFiles": [
-      "<rootDir>/server/config/jest.init.js"
-    ],
-    "testMatch": [
-      "<rootDir>/server/**/__tests__/**/*.js?(x)",
-      "<rootDir>/server/**/?(*.)(spec|test).js?(x)"
-    ],
-    "testEnvironment": "node",
-    "testURL": "http://localhost",
-    "transform": {
-      "^.+\\.(js|jsx)$": "<rootDir>/node_modules/babel-jest",
-      "^(?!.*\\.(js|jsx|css|json)$)": "<rootDir>/client/config/jest/fileTransform.js"
-    },
-    "transformIgnorePatterns": [
-      "[/\\\\]node_modules[/\\\\].+\\.(js|jsx)$"
-    ],
-    "moduleNameMapper": {
-      "^react-native$": "react-native-web"
-    },
-    "moduleFileExtensions": [
-      "web.js",
-      "js",
-      "json",
-      "web.jsx",
-      "jsx"
-    ]
   },
   "eslintConfig": {},
   "devDependencies": {
