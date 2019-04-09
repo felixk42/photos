@@ -143,7 +143,7 @@ Design Focus
 - I think speed is a key feature for most B2C apps, and has proven to have a serious impact on conversion
 - [Think With Google](https://www.thinkwithgoogle.com/marketing-resources/experience-design/mobile-page-speed-load-time/)
 - Users can get used to ugly designs and counterintuitive controls to some extent, but there's nothing they can do to a slow app
-- So if I have more time, I would
+- So if I have more time, I would:
 1. Pre-warm the SQL cache with popular requests so the first queries are not cold calls, and then
 2. Make the UX more intuitive and convenient on the front end, for example clicking on a tag can lead to searching for that tag.
 3. Make the URL captures the scrolling position.
